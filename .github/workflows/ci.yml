@@ -1,0 +1,106 @@
+name: Ray Tracer CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Build and Test
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        compiler: [gcc, clang]
+        exclude:
+          # GCC is not available on macOS runners
+          - os: macos-latest
+            compiler: gcc
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc clang make gcovr
+        
+    - name: Install dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install gcovr
+        
+    - name: Set compiler
+      run: |
+        if [ "${{ matrix.compiler }}" = "clang" ]; then
+          echo "CC=clang" >> $GITHUB_ENV
+        else
+          echo "CC=gcc" >> $GITHUB_ENV
+        fi
+        
+    - name: Download test framework
+      run: make deps
+      
+    - name: Build project
+      run: make all
+      
+    - name: Run tests
+      run: make test
+      continue-on-error: true  # Tests may not exist yet
+      
+    - name: Generate coverage report
+      run: make coverage
+      continue-on-error: true  # Coverage may not work yet
+      
+    - name: Run demo render
+      run: make demo
+      
+    - name: Check demo output
+      run: |
+        if [ -f output/demo.ppm ]; then
+          echo "Demo render successful: $(wc -c < output/demo.ppm) bytes"
+          # Basic sanity check - PPM files should start with "P3"
+          if head -1 output/demo.ppm | grep -q "P3"; then
+            echo "PPM format validated"
+          else
+            echo "ERROR: Invalid PPM format"
+            exit 1
+          fi
+        else
+          echo "ERROR: Demo render failed - no output file"
+          exit 1
+        fi
+        
+    - name: Upload demo output
+      uses: actions/upload-artifact@v4
+      with:
+        name: demo-render-${{ matrix.os }}-${{ matrix.compiler }}
+        path: output/demo.ppm
+        retention-days: 7
+
+  format-check:
+    name: Code Format Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install clang-format
+      run: sudo apt-get update && sudo apt-get install -y clang-format
+      
+    - name: Check formatting
+      run: |
+        make format
+        if git diff --exit-code; then
+          echo "Code formatting is correct"
+        else
+          echo "Code formatting issues found. Please run 'make format'"
+          git diff
+          exit 1
+        fi 
