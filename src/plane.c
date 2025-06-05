@@ -1,6 +1,6 @@
 /**
  * @file plane.c
- * @brief Plane geometry implementation
+ * @brief Infinite plane geometry implementation
  * @author Morpheus (Project Manager & Architect)
  * @date June 2025
  */
@@ -8,6 +8,8 @@
 #include "plane.h"
 #include <stdio.h>
 #include <math.h>
+
+#define EPSILON 1e-6f
 
 Plane plane_create(Vec3 point, Vec3 normal, Color color) {
     Plane plane;
@@ -32,18 +34,17 @@ Plane plane_create_xz(float y, Color color) {
 
 bool plane_hit(const Hittable *hittable, const Ray *ray, 
                float t_min, float t_max, HitRecord *hit_rec) {
-    const Plane *plane = (const Plane*)hittable->data;
+    const Plane *plane = (const Plane *)hittable->data;
     
     // Ray-plane intersection
-    // Plane equation: dot(point - plane_point, normal) = 0
-    // Ray equation: P(t) = origin + t * direction
-    // Substituting: dot(origin + t*direction - plane_point, normal) = 0
-    // Solving for t: t = dot(plane_point - origin, normal) / dot(direction, normal)
+    // Plane equation: dot(normal, point - plane_point) = 0
+    // Ray: P(t) = origin + t * direction
+    // Substituting: dot(normal, origin + t*direction - plane_point) = 0
     
-    float denom = vec3_dot(ray->direction, plane->normal);
+    float denom = vec3_dot(plane->normal, ray->direction);
     
     // Check if ray is parallel to plane
-    if (fabsf(denom) < 1e-6f) {
+    if (fabsf(denom) < EPSILON) {
         return false;
     }
     
@@ -54,6 +55,7 @@ bool plane_hit(const Hittable *hittable, const Ray *ray,
         return false;
     }
     
+    // Fill hit record
     hit_rec->t = t;
     hit_rec->point = ray_at(ray, t);
     hit_record_set_face_normal(hit_rec, ray, plane->normal);

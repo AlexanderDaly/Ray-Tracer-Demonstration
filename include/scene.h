@@ -12,6 +12,8 @@
 #include "color.h"
 #include "ray.h"
 #include "hit.h"
+#include "camera.h"
+#include <stdio.h>
 
 #define MAX_OBJECTS 32
 
@@ -86,6 +88,14 @@ Color scene_ray_color(const Scene *scene, const Ray *ray, int depth);
  * @return Shaded color
  */
 Color scene_shade_lambertian(const Scene *scene, const HitRecord *hit_rec, Color material_color);
+
+/**
+ * @brief Render a scene to PPM output
+ * @param camera Camera configuration
+ * @param scene Scene to render
+ * @param output Output file stream
+ */
+void render_scene(Camera *camera, Scene *scene, FILE *output);
 
 /**
  * @brief Print scene information

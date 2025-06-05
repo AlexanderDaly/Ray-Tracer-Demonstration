@@ -9,22 +9,19 @@
 #include <stdio.h>
 
 Hittable hittable_create(void *data, HitFunction hit_func) {
-    Hittable hittable;
-    hittable.data = data;
-    hittable.hit_func = hit_func;
-    return hittable;
+    Hittable obj;
+    obj.data = data;
+    obj.hit_func = hit_func;
+    return obj;
 }
 
 bool hittable_hit(const Hittable *object, const Ray *ray, 
                   float t_min, float t_max, HitRecord *hit_rec) {
-    if (object->hit_func == NULL) {
-        return false;
-    }
     return object->hit_func(object, ray, t_min, t_max, hit_rec);
 }
 
 void hit_record_set_face_normal(HitRecord *hit_rec, const Ray *ray, Vec3 outward_normal) {
-    hit_rec->front_face = vec3_dot(ray->direction, outward_normal) < 0;
+    hit_rec->front_face = vec3_dot(ray->direction, outward_normal) < 0.0f;
     hit_rec->normal = hit_rec->front_face ? outward_normal : vec3_negate(outward_normal);
 }
 

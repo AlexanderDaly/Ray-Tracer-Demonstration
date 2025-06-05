@@ -7,6 +7,7 @@
 
 #include "unity/unity.h"
 #include "sphere.h"
+#include "scene.h"
 #include "ray.h"
 
 void test_sphere_creation(void) {
@@ -68,8 +69,18 @@ void test_sphere_ray_miss(void) {
     TEST_ASSERT_FALSE(hit);
 }
 
+void test_scene_creation(void) {
+    Color bg = color_create(0.5f, 0.7f, 1.0f);
+    Scene scene = scene_create(bg);
+    
+    TEST_ASSERT_EQUAL_INT(0, scene.object_count);
+    TEST_ASSERT_EQUAL_INT(0, scene.light_count);
+    TEST_ASSERT_FLOAT_WITHIN(1e-6f, 0.5f, scene.background_color.x);
+}
+
 void run_sphere_tests(void) {
     RUN_TEST(test_sphere_creation);
     RUN_TEST(test_sphere_ray_hit);
     RUN_TEST(test_sphere_ray_miss);
+    RUN_TEST(test_scene_creation);
 }

@@ -10,6 +10,7 @@
 
 #include "vec3.h"
 #include <stdint.h>
+#include <stdbool.h>
 
 /**
  * @brief RGB color (same layout as Vec3)
@@ -107,6 +108,13 @@ uint32_t color_to_rgb24(Color c);
  */
 static inline Color color_lerp(Color a, Color b, float t) {
     return vec3_lerp(a, b, t);
+}
+
+/**
+ * @brief Check if two colors are equal within epsilon
+ */
+static inline bool color_equal(Color a, Color b, float epsilon) {
+    return vec3_equal(a, b, epsilon);
 }
 
 /**
