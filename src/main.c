@@ -195,10 +195,10 @@ int main(int argc, char *argv[]) {
     
     printf("Ray tracing complete! Output written to '%s'\n", output_filename);
     printf("\nScene contents:\n");
-    printf("  • 3 colored spheres with Lambertian shading\n");
-    printf("  • Ground plane for depth reference\n");
-    printf("  • Point light source with ambient lighting\n");
-    printf("  • Perspective camera with 45° field of view\n");
+    printf("  - 3 colored spheres with Lambertian shading\n");
+    printf("  - Ground plane for depth reference\n");
+    printf("  - Point light source with ambient lighting\n");
+    printf("  - Perspective camera with 45° field of view\n");
     printf("\nTo view the image:\n");
     printf("  - On macOS: open %s\n", output_filename);
     printf("  - On Linux: display %s  (ImageMagick)\n", output_filename);
