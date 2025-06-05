@@ -90,8 +90,8 @@ static Color trace_ray(const Ray *ray) {
     
     if (scene_hit(ray, T_MIN, T_MAX, &hit_rec)) {
         // Get material color from the object
-        // For now, use a default material color since we don't store it in HitRecord
-        Color material_color = color_create(0.7f, 0.3f, 0.3f);  // Default reddish
+        // Use the material color stored in HitRecord
+        Color material_color = hit_rec.material_color;
         
         return calculate_lighting(&hit_rec, material_color);
     } else {
