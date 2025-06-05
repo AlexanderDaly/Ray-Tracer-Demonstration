@@ -18,6 +18,7 @@
 #include "hit.h"
 #include "sphere.h"
 #include "plane.h"
+#include "render.h"
 
 /**
  * @brief Print usage information
@@ -35,44 +36,81 @@ static void print_usage(const char *program_name) {
 }
 
 /**
- * @brief Simple PPM writer
+ * @brief Setup a demonstration scene
  */
-static void write_ppm_header(FILE *file, int width, int height) {
-    fprintf(file, "P3\n");
-    fprintf(file, "%d %d\n", width, height);
-    fprintf(file, "255\n");
+static void setup_demo_scene(void) {
+    // Clear any existing scene
+    scene_clear();
+    
+    // Create spheres
+    Sphere sphere1 = sphere_create(
+        vec3_create(0.0f, 0.0f, -1.0f),    // center
+        0.5f,                               // radius
+        color_create(0.8f, 0.3f, 0.3f)     // red material
+    );
+    
+    Sphere sphere2 = sphere_create(
+        vec3_create(-1.0f, 0.0f, -1.0f),   // center
+        0.5f,                               // radius
+        color_create(0.3f, 0.3f, 0.8f)     // blue material
+    );
+    
+    Sphere sphere3 = sphere_create(
+        vec3_create(1.0f, 0.0f, -1.0f),    // center
+        0.5f,                               // radius
+        color_create(0.3f, 0.8f, 0.3f)     // green material
+    );
+    
+    // Create ground plane
+    Plane ground = plane_create_xz(
+        -0.5f,                              // y position
+        color_create(0.5f, 0.5f, 0.5f)     // gray material
+    );
+    
+    // Add objects to scene
+    scene_add_object(sphere_to_hittable(&sphere1));
+    scene_add_object(sphere_to_hittable(&sphere2));
+    scene_add_object(sphere_to_hittable(&sphere3));
+    scene_add_object(plane_to_hittable(&ground));
+    
+    // Set up lighting
+    Vec3 light_pos = vec3_create(-2.0f, 4.0f, 1.0f);
+    Color light_color = color_create(1.0f, 1.0f, 1.0f);  // White light
+    scene_set_light(light_pos, light_color);
+    
+    Color ambient_color = color_create(0.1f, 0.1f, 0.1f);  // Dim ambient
+    scene_set_ambient(ambient_color);
+    
+    printf("Demo scene created:\n");
+    printf("  - 3 spheres (red, blue, green)\n");
+    printf("  - 1 ground plane (gray)\n");
+    printf("  - Point light with ambient lighting\n");
 }
 
 /**
- * @brief Write a color to PPM format
+ * @brief Render the ray-traced scene
  */
-static void write_ppm_color(FILE *file, Color color) {
-    uint8_t r, g, b;
-    color_to_u8(color, &r, &g, &b);
-    fprintf(file, "%d %d %d\n", r, g, b);
-}
-
-/**
- * @brief Simple test render - gradient background
- */
-static void render_test_scene(FILE *output, int width, int height) {
-    write_ppm_header(output, width, height);
+static void render_ray_traced_scene(FILE *output, int width, int height) {
+    // Setup the scene
+    setup_demo_scene();
     
-    for (int j = height - 1; j >= 0; j--) {
-        fprintf(stderr, "\rScanlines remaining: %d ", j);
-        fflush(stderr);
-        
-        for (int i = 0; i < width; i++) {
-            float u = (float)i / (float)(width - 1);
-            float v = (float)j / (float)(height - 1);
-            
-            // Simple gradient: blue to white
-            Color pixel_color = color_create(u, v, 0.5f);
-            write_ppm_color(output, pixel_color);
-        }
-    }
+    // Create camera
+    Vec3 camera_pos = vec3_create(0.0f, 0.0f, 1.0f);
+    Vec3 target = vec3_create(0.0f, 0.0f, -1.0f);
+    Vec3 up = vec3_create(0.0f, 1.0f, 0.0f);
     
-    fprintf(stderr, "\nDone.\n");
+    float aspect_ratio = (float)width / (float)height;
+    Camera camera = camera_create_perspective(
+        camera_pos, target, up, 
+        45.0f,        // 45 degree field of view
+        aspect_ratio, 
+        width, height
+    );
+    
+    printf("Camera setup: perspective projection, 45° FOV\n");
+    
+    // Render the scene
+    render_scene(&camera, output);
 }
 
 /**
@@ -141,7 +179,7 @@ int main(int argc, char *argv[]) {
     }
     
     printf("Ray Tracer Demonstration v0.1\n");
-    printf("Rendering %dx%d image to '%s'\n", image_width, image_height, output_filename);
+    printf("Rendering %dx%d ray-traced image to '%s'\n", image_width, image_height, output_filename);
     
     // Open output file
     FILE *output = fopen(output_filename, "w");
@@ -150,12 +188,17 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     
-    // Render the scene (currently just a test pattern)
-    render_test_scene(output, image_width, image_height);
+    // Render the ray-traced scene
+    render_ray_traced_scene(output, image_width, image_height);
     
     fclose(output);
     
-    printf("Render complete! Output written to '%s'\n", output_filename);
+    printf("Ray tracing complete! Output written to '%s'\n", output_filename);
+    printf("\nScene contents:\n");
+    printf("  • 3 colored spheres with Lambertian shading\n");
+    printf("  • Ground plane for depth reference\n");
+    printf("  • Point light source with ambient lighting\n");
+    printf("  • Perspective camera with 45° field of view\n");
     printf("\nTo view the image:\n");
     printf("  - On macOS: open %s\n", output_filename);
     printf("  - On Linux: display %s  (ImageMagick)\n", output_filename);
